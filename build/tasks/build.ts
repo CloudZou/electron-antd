@@ -7,6 +7,7 @@ import builderConfig from '../builder.config'
 import buildConfig from '../config'
 import webpackConfigMain from '../webpack.config.main'
 import webpackConfigRenderer from '../webpack.config.renderer'
+import webpackConfigTiktok from '../webpack.config.tiktok'
 import buildCommon from './build-common'
 
 const env = process.env.BUILD_ENV as keyof typeof buildConfig.env
@@ -25,6 +26,14 @@ async function buildRenderer() {
   })
 }
 
+async function buildTiktok() {
+  return buildCommon({ env, webpackConfig: webpackConfigTiktok, type: 'tiktok' }).then(() => {
+    exConsole.success(
+      `[Tiktok Complete] : ${pc.underline(pc.magenta(path.resolve(buildConfig.dist, 'tiktok')))}`
+    )
+  })
+}
+
 function build() {
   const { dist } = buildConfig
   exConsole.info(`[Clear Dir...] : ${buildConfig.dist}`)
@@ -37,7 +46,7 @@ function build() {
 
   exConsole.info(`[Building...] : ${env} : ${process.env.NODE_ENV}`)
 
-  Promise.all([buildMain(), buildRenderer()])
+  Promise.all([buildMain(), buildTiktok(), buildRenderer()])
     .then(() => {
       electronBuilder(builderConfig)
         .then((res) => {

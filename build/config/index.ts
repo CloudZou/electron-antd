@@ -9,6 +9,7 @@ const config = {
   port: 13311,
   mainSource: path.resolve(rootPath, 'app/electron'),
   rendererSource: path.resolve(rootPath, 'app/src'),
+  tiktokSource: path.resolve(rootPath, 'app/tiktok'),
   template: path.resolve(rootPath, 'app/src/index.html'),
   // static: path.resolve(rootPath, 'assets'),
   static: {

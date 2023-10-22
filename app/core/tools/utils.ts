@@ -1,3 +1,6 @@
+import * as fs from 'fs'
+const path = require('path')
+
 /**
  * 格式化日期
  * @param d
@@ -72,4 +75,33 @@ export function toSearch(obj: Record<string, any>): string {
     return `${key}=${encodeURIComponent(val)}`
   })
   return '?' + arr.join('&')
+}
+
+export function delay(time: number) {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, time)
+  })
+}
+
+export function generateRandomId(length: number) {
+  let result = ''
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  const charactersLength = characters.length
+
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength))
+  }
+
+  return result
+}
+
+export function mkdirsSync(dirname: string) {
+  if (fs.existsSync(dirname)) {
+    return true
+  } else {
+    if (mkdirsSync(path.dirname(dirname))) {
+      fs.mkdirSync(dirname)
+      return true
+    }
+  }
 }

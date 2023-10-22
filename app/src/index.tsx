@@ -19,6 +19,10 @@ ipcRenderer.on('dom-ready', (event, data) => {
   renderApp()
 })
 
+ipcRenderer.on('cs-reply', (e, msg) => {
+  console.log('收到信息:', msg)
+})
+
 // 组件热更新
 // if (module.hot) {
 //   module.hot.accept('./app', renderApp)

@@ -18,6 +18,12 @@
     "icon": "flask"
   },
   {
+    "key": "Grid",
+    "href": "#/grid",
+    "title": "Grid",
+    "icon": "grid"
+  },
+  {
     "key": "any",
     "href": "#/any",
     "title": "No Match",

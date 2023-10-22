@@ -5,9 +5,11 @@ import WebpackDevServer from 'webpack-dev-server'
 
 import { exConsole } from '../utils'
 import ElectronProcess from './electron-process'
+import TiktokProcess from './tiktok-process'
 import buildConfig from '../config'
 import webpackConfigRenderer from '../webpack.config.renderer'
 import webpackConfigMain from '../webpack.config.main'
+import webpackConfigTiktok from '../webpack.config.tiktok'
 
 process.env.NODE_ENV = 'development'
 /** 禁用 electron warning */
@@ -34,7 +36,7 @@ const devServerOptions: WebpackDevServer.Configuration = {
 }
 
 const electronProcess = new ElectronProcess()
-
+const tiktokProcess = new TiktokProcess()
 /**
  * 启动主进程编译服务
  */
@@ -53,6 +55,31 @@ function startMain(): Promise<webpack.Stats> {
         exConsole.error(stats.toString())
       } else {
         electronProcess.start()
+        resolve(stats)
+      }
+    })
+  })
+}
+
+/**
+ * 启动tiktok进程编译服务
+ */
+function startTiktok(): Promise<webpack.Stats> {
+  return new Promise((resolve) => {
+    webpackConfigTiktok.devtool = 'source-map'
+    webpackConfigTiktok.watch = true
+    webpackConfigTiktok.watchOptions = {
+      ignored: ['**/*.tsx', '**/*.jsx', '**/*.less', '**/*.css'],
+    }
+    webpack(webpackConfigTiktok, (err, stats) => {
+      if (err) throw err
+      if (!stats) throw 'Webpack states error!'
+
+      if (stats.hasErrors()) {
+        exConsole.error(stats.toString())
+      } else {
+        // electronProcess.start()
+        // tiktokProcess.start()
         resolve(stats)
       }
     })
@@ -87,6 +114,7 @@ async function startDevServer() {
   exConsole.info(`${process.env.BUILD_ENV} starting...`)
   startRenderer()
   startMain()
+  startTiktok()
 }
 
 startDevServer()

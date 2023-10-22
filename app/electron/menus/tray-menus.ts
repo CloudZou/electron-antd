@@ -28,12 +28,12 @@ export const trayMenus: MenuItemConstructorOptions[] = [
   {
     label: 'Help',
     submenu: [
-      {
-        label: 'Log Viewer',
-        click: (): void => {
-          $tools.createWindow('LogViewer')
-        },
-      },
+      // {
+      //   label: 'Log Viewer',
+      //   click: (): void => {
+      //     $tools.createWindow('LogViewer')
+      //   },
+      // },
       { type: 'separator' },
       {
         label: 'About',

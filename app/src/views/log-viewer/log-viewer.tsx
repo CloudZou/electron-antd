@@ -21,7 +21,7 @@ const TYPE_COLORS = {
   error: 'text-error',
 }
 
-class LogViewerClass extends React.Component<Props, State> {
+class LogViewerClass extends React.Component<AnyObj, State> {
   private logReader = new LogReader()
   private logDetailRef = React.createRef<HTMLDivElement>()
 
@@ -34,7 +34,7 @@ class LogViewerClass extends React.Component<Props, State> {
   private fileListMenu
   private activeMenuFileItem: LogFile | undefined
 
-  constructor(props: Props) {
+  constructor(props: AnyObj) {
     super(props)
     this.state.activeFile = this.state.logFiles[0]
     this.fileListMenu = Menu.buildFromTemplate([

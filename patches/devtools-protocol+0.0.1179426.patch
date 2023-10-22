@@ -1,0 +1,882 @@
+diff --git a/node_modules/devtools-protocol/types/protocol-mapping.d.ts b/node_modules/devtools-protocol/types/protocol-mapping.d.ts
+index 9147152..c40c731 100644
+--- a/node_modules/devtools-protocol/types/protocol-mapping.d.ts
++++ b/node_modules/devtools-protocol/types/protocol-mapping.d.ts
+@@ -114,6 +114,10 @@ export namespace ProtocolMapping {
+          */
+         'Animation.animationStarted': [Protocol.Animation.AnimationStartedEvent];
+         'Audits.issueAdded': [Protocol.Audits.IssueAddedEvent];
++        /**
++         * Emitted when an address form is filled.
++         */
++        'Autofill.addressFormFilled': [Protocol.Autofill.AddressFormFilledEvent];
+         /**
+          * Called when the recording state for the service has been updated.
+          */
+@@ -722,10 +726,6 @@ export namespace ProtocolMapping {
+          */
+         'Preload.ruleSetUpdated': [Protocol.Preload.RuleSetUpdatedEvent];
+         'Preload.ruleSetRemoved': [Protocol.Preload.RuleSetRemovedEvent];
+-        /**
+-         * Fired when a prerender attempt is completed.
+-         */
+-        'Preload.prerenderAttemptCompleted': [Protocol.Preload.PrerenderAttemptCompletedEvent];
+         /**
+          * Fired when a preload enabled state is updated.
+          */
+@@ -1492,6 +1492,20 @@ export namespace ProtocolMapping {
+             paramsType: [Protocol.Autofill.SetAddressesRequest];
+             returnType: void;
+         };
++        /**
++         * Disables autofill domain notifications.
++         */
++        'Autofill.disable': {
++            paramsType: [];
++            returnType: void;
++        };
++        /**
++         * Enables autofill domain notifications.
++         */
++        'Autofill.enable': {
++            paramsType: [];
++            returnType: void;
++        };
+         /**
+          * Enables event updates for the service.
+          */
+@@ -1778,6 +1792,13 @@ export namespace ProtocolMapping {
+             paramsType: [Protocol.CSS.SetEffectivePropertyValueForNodeRequest];
+             returnType: void;
+         };
++        /**
++         * Modifies the property rule property name.
++         */
++        'CSS.setPropertyRulePropertyName': {
++            paramsType: [Protocol.CSS.SetPropertyRulePropertyNameRequest];
++            returnType: Protocol.CSS.SetPropertyRulePropertyNameResponse;
++        };
+         /**
+          * Modifies the keyframe rule key text.
+          */
+@@ -2398,6 +2419,13 @@ export namespace ProtocolMapping {
+             paramsType: [Protocol.EventBreakpoints.RemoveInstrumentationBreakpointRequest];
+             returnType: void;
+         };
++        /**
++         * Removes all breakpoints
++         */
++        'EventBreakpoints.disable': {
++            paramsType: [];
++            returnType: void;
++        };
+         /**
+          * Disables DOM snapshot agent for the given page.
+          */
+@@ -2598,6 +2626,29 @@ export namespace ProtocolMapping {
+             paramsType: [Protocol.Emulation.SetGeolocationOverrideRequest?];
+             returnType: void;
+         };
++        'Emulation.getOverriddenSensorInformation': {
++            paramsType: [Protocol.Emulation.GetOverriddenSensorInformationRequest];
++            returnType: Protocol.Emulation.GetOverriddenSensorInformationResponse;
++        };
++        /**
++         * Overrides a platform sensor of a given type. If |enabled| is true, calls to
++         * Sensor.start() will use a virtual sensor as backend rather than fetching
++         * data from a real hardware sensor. Otherwise, existing virtual
++         * sensor-backend Sensor objects will fire an error event and new calls to
++         * Sensor.start() will attempt to use a real sensor instead.
++         */
++        'Emulation.setSensorOverrideEnabled': {
++            paramsType: [Protocol.Emulation.SetSensorOverrideEnabledRequest];
++            returnType: void;
++        };
++        /**
++         * Updates the sensor readings reported by a sensor type previously overriden
++         * by setSensorOverrideEnabled.
++         */
++        'Emulation.setSensorOverrideReadings': {
++            paramsType: [Protocol.Emulation.SetSensorOverrideReadingsRequest];
++            returnType: void;
++        };
+         /**
+          * Overrides the Idle state.
+          */
+@@ -3508,6 +3559,13 @@ export namespace ProtocolMapping {
+             paramsType: [Protocol.Overlay.SetShowIsolatedElementsRequest];
+             returnType: void;
+         };
++        /**
++         * Show Window Controls Overlay for PWA
++         */
++        'Overlay.setShowWindowControlsOverlay': {
++            paramsType: [Protocol.Overlay.SetShowWindowControlsOverlayRequest?];
++            returnType: void;
++        };
+         /**
+          * Deprecated, please use addScriptToEvaluateOnNewDocument instead.
+          */
+@@ -4768,6 +4826,14 @@ export namespace ProtocolMapping {
+             paramsType: [Protocol.FedCm.SelectAccountRequest];
+             returnType: void;
+         };
++        /**
++         * Only valid if the dialog type is ConfirmIdpLogin. Acts as if the user had
++         * clicked the continue button.
++         */
++        'FedCm.confirmIdpLogin': {
++            paramsType: [Protocol.FedCm.ConfirmIdpLoginRequest];
++            returnType: void;
++        };
+         'FedCm.dismissDialog': {
+             paramsType: [Protocol.FedCm.DismissDialogRequest];
+             returnType: void;
+diff --git a/node_modules/devtools-protocol/types/protocol-proxy-api.d.ts b/node_modules/devtools-protocol/types/protocol-proxy-api.d.ts
+index dad6128..d491d44 100644
+--- a/node_modules/devtools-protocol/types/protocol-proxy-api.d.ts
++++ b/node_modules/devtools-protocol/types/protocol-proxy-api.d.ts
+@@ -810,6 +810,21 @@ export namespace ProtocolProxyApi {
+          */
+         setAddresses(params: Protocol.Autofill.SetAddressesRequest): Promise<void>;
+ 
++        /**
++         * Disables autofill domain notifications.
++         */
++        disable(): Promise<void>;
++
++        /**
++         * Enables autofill domain notifications.
++         */
++        enable(): Promise<void>;
++
++        /**
++         * Emitted when an address form is filled.
++         */
++        on(event: 'addressFormFilled', listener: (params: Protocol.Autofill.AddressFormFilledEvent) => void): void;
++
+     }
+ 
+     export interface BackgroundServiceApi {
+@@ -1048,6 +1063,11 @@ export namespace ProtocolProxyApi {
+          */
+         setEffectivePropertyValueForNode(params: Protocol.CSS.SetEffectivePropertyValueForNodeRequest): Promise<void>;
+ 
++        /**
++         * Modifies the property rule property name.
++         */
++        setPropertyRulePropertyName(params: Protocol.CSS.SetPropertyRulePropertyNameRequest): Promise<Protocol.CSS.SetPropertyRulePropertyNameResponse>;
++
+         /**
+          * Modifies the keyframe rule key text.
+          */
+@@ -1630,6 +1650,11 @@ export namespace ProtocolProxyApi {
+          */
+         removeInstrumentationBreakpoint(params: Protocol.EventBreakpoints.RemoveInstrumentationBreakpointRequest): Promise<void>;
+ 
++        /**
++         * Removes all breakpoints
++         */
++        disable(): Promise<void>;
++
+     }
+ 
+     export interface DOMSnapshotApi {
+@@ -1793,6 +1818,23 @@ export namespace ProtocolProxyApi {
+          */
+         setGeolocationOverride(params: Protocol.Emulation.SetGeolocationOverrideRequest): Promise<void>;
+ 
++        getOverriddenSensorInformation(params: Protocol.Emulation.GetOverriddenSensorInformationRequest): Promise<Protocol.Emulation.GetOverriddenSensorInformationResponse>;
++
++        /**
++         * Overrides a platform sensor of a given type. If |enabled| is true, calls to
++         * Sensor.start() will use a virtual sensor as backend rather than fetching
++         * data from a real hardware sensor. Otherwise, existing virtual
++         * sensor-backend Sensor objects will fire an error event and new calls to
++         * Sensor.start() will attempt to use a real sensor instead.
++         */
++        setSensorOverrideEnabled(params: Protocol.Emulation.SetSensorOverrideEnabledRequest): Promise<void>;
++
++        /**
++         * Updates the sensor readings reported by a sensor type previously overriden
++         * by setSensorOverrideEnabled.
++         */
++        setSensorOverrideReadings(params: Protocol.Emulation.SetSensorOverrideReadingsRequest): Promise<void>;
++
+         /**
+          * Overrides the Idle state.
+          */
+@@ -2667,6 +2709,11 @@ export namespace ProtocolProxyApi {
+          */
+         setShowIsolatedElements(params: Protocol.Overlay.SetShowIsolatedElementsRequest): Promise<void>;
+ 
++        /**
++         * Show Window Controls Overlay for PWA
++         */
++        setShowWindowControlsOverlay(params: Protocol.Overlay.SetShowWindowControlsOverlayRequest): Promise<void>;
++
+         /**
+          * Fired when the node should be inspected. This happens after call to `setInspectMode` or when
+          * user manually inspects an element.
+@@ -4035,11 +4082,6 @@ export namespace ProtocolProxyApi {
+ 
+         on(event: 'ruleSetRemoved', listener: (params: Protocol.Preload.RuleSetRemovedEvent) => void): void;
+ 
+-        /**
+-         * Fired when a prerender attempt is completed.
+-         */
+-        on(event: 'prerenderAttemptCompleted', listener: (params: Protocol.Preload.PrerenderAttemptCompletedEvent) => void): void;
+-
+         /**
+          * Fired when a preload enabled state is updated.
+          */
+@@ -4069,6 +4111,12 @@ export namespace ProtocolProxyApi {
+ 
+         selectAccount(params: Protocol.FedCm.SelectAccountRequest): Promise<void>;
+ 
++        /**
++         * Only valid if the dialog type is ConfirmIdpLogin. Acts as if the user had
++         * clicked the continue button.
++         */
++        confirmIdpLogin(params: Protocol.FedCm.ConfirmIdpLoginRequest): Promise<void>;
++
+         dismissDialog(params: Protocol.FedCm.DismissDialogRequest): Promise<void>;
+ 
+         /**
+diff --git a/node_modules/devtools-protocol/types/protocol.d.ts b/node_modules/devtools-protocol/types/protocol.d.ts
+index b4f847c..68605c7 100644
+--- a/node_modules/devtools-protocol/types/protocol.d.ts
++++ b/node_modules/devtools-protocol/types/protocol.d.ts
+@@ -1497,8 +1497,7 @@ export namespace Protocol {
+         }
+ 
+         /**
+-         * Represents options for serialization. Overrides `generatePreview`, `returnByValue` and
+-         * `generateWebDriverValue`.
++         * Represents options for serialization. Overrides `generatePreview` and `returnByValue`.
+          */
+         export interface SerializationOptions {
+             /**
+@@ -1541,6 +1540,7 @@ export namespace Protocol {
+             Arraybuffer = 'arraybuffer',
+             Node = 'node',
+             Window = 'window',
++            Generator = 'generator',
+         }
+ 
+         /**
+@@ -1550,7 +1550,7 @@ export namespace Protocol {
+             /**
+              *  (DeepSerializedValueType enum)
+              */
+-            type: ('undefined' | 'null' | 'string' | 'number' | 'boolean' | 'bigint' | 'regexp' | 'date' | 'symbol' | 'array' | 'object' | 'function' | 'map' | 'set' | 'weakmap' | 'weakset' | 'error' | 'proxy' | 'promise' | 'typedarray' | 'arraybuffer' | 'node' | 'window');
++            type: ('undefined' | 'null' | 'string' | 'number' | 'boolean' | 'bigint' | 'regexp' | 'date' | 'symbol' | 'array' | 'object' | 'function' | 'map' | 'set' | 'weakmap' | 'weakset' | 'error' | 'proxy' | 'promise' | 'typedarray' | 'arraybuffer' | 'node' | 'window' | 'generator');
+             value?: any;
+             objectId?: string;
+             /**
+@@ -1636,10 +1636,6 @@ export namespace Protocol {
+              * String representation of the object.
+              */
+             description?: string;
+-            /**
+-             * Deprecated. Use `deepSerializedValue` instead. WebDriver BiDi representation of the value.
+-             */
+-            webDriverValue?: DeepSerializedValue;
+             /**
+              * Deep serialized value.
+              */
+@@ -2150,16 +2146,9 @@ export namespace Protocol {
+              * This is mutually exclusive with `executionContextId`.
+              */
+             uniqueContextId?: string;
+-            /**
+-             * Deprecated. Use `serializationOptions: {serialization:"deep"}` instead.
+-             * Whether the result should contain `webDriverValue`, serialized according to
+-             * https://w3c.github.io/webdriver-bidi. This is mutually exclusive with `returnByValue`, but
+-             * resulting `objectId` is still provided.
+-             */
+-            generateWebDriverValue?: boolean;
+             /**
+              * Specifies the result serialization. If provided, overrides
+-             * `generatePreview`, `returnByValue` and `generateWebDriverValue`.
++             * `generatePreview` and `returnByValue`.
+              */
+             serializationOptions?: SerializationOptions;
+         }
+@@ -2284,17 +2273,9 @@ export namespace Protocol {
+              * This is mutually exclusive with `contextId`.
+              */
+             uniqueContextId?: string;
+-            /**
+-             * Deprecated. Use `serializationOptions: {serialization:"deep"}` instead.
+-             * Whether the result should contain `webDriverValue`, serialized
+-             * according to
+-             * https://w3c.github.io/webdriver-bidi. This is mutually exclusive with `returnByValue`, but
+-             * resulting `objectId` is still provided.
+-             */
+-            generateWebDriverValue?: boolean;
+             /**
+              * Specifies the result serialization. If provided, overrides
+-             * `generatePreview`, `returnByValue` and `generateWebDriverValue`.
++             * `generatePreview` and `returnByValue`.
+              */
+             serializationOptions?: SerializationOptions;
+         }
+@@ -3276,9 +3257,9 @@ export namespace Protocol {
+             frameId: Page.FrameId;
+         }
+ 
+-        export type CookieExclusionReason = ('ExcludeSameSiteUnspecifiedTreatedAsLax' | 'ExcludeSameSiteNoneInsecure' | 'ExcludeSameSiteLax' | 'ExcludeSameSiteStrict' | 'ExcludeInvalidSameParty' | 'ExcludeSamePartyCrossPartyContext' | 'ExcludeDomainNonASCII' | 'ExcludeThirdPartyCookieBlockedInFirstPartySet');
++        export type CookieExclusionReason = ('ExcludeSameSiteUnspecifiedTreatedAsLax' | 'ExcludeSameSiteNoneInsecure' | 'ExcludeSameSiteLax' | 'ExcludeSameSiteStrict' | 'ExcludeInvalidSameParty' | 'ExcludeSamePartyCrossPartyContext' | 'ExcludeDomainNonASCII' | 'ExcludeThirdPartyCookieBlockedInFirstPartySet' | 'ExcludeThirdPartyPhaseout');
+ 
+-        export type CookieWarningReason = ('WarnSameSiteUnspecifiedCrossSiteContext' | 'WarnSameSiteNoneInsecure' | 'WarnSameSiteUnspecifiedLaxAllowUnsafe' | 'WarnSameSiteStrictLaxDowngradeStrict' | 'WarnSameSiteStrictCrossDowngradeStrict' | 'WarnSameSiteStrictCrossDowngradeLax' | 'WarnSameSiteLaxCrossDowngradeStrict' | 'WarnSameSiteLaxCrossDowngradeLax' | 'WarnAttributeValueExceedsMaxSize' | 'WarnDomainNonASCII' | 'WarnThirdPartyPhaseout');
++        export type CookieWarningReason = ('WarnSameSiteUnspecifiedCrossSiteContext' | 'WarnSameSiteNoneInsecure' | 'WarnSameSiteUnspecifiedLaxAllowUnsafe' | 'WarnSameSiteStrictLaxDowngradeStrict' | 'WarnSameSiteStrictCrossDowngradeStrict' | 'WarnSameSiteStrictCrossDowngradeLax' | 'WarnSameSiteLaxCrossDowngradeStrict' | 'WarnSameSiteLaxCrossDowngradeLax' | 'WarnAttributeValueExceedsMaxSize' | 'WarnDomainNonASCII' | 'WarnThirdPartyPhaseout' | 'WarnCrossSiteRedirectDowngradeChangesInclusion');
+ 
+         export type CookieOperation = ('SetCookie' | 'ReadCookie');
+ 
+@@ -3515,6 +3496,17 @@ export namespace Protocol {
+             trackingSites: string[];
+         }
+ 
++        /**
++         * This issue warns about third-party sites that are accessing cookies on the
++         * current page, and have been permitted due to having a global metadata grant.
++         * Note that in this context 'site' means eTLD+1. For example, if the URL
++         * `https://example.test:80/web_page` was accessing cookies, the site reported
++         * would be `example.test`.
++         */
++        export interface CookieDeprecationMetadataIssueDetails {
++            allowedSites: string[];
++        }
++
+         export type ClientHintIssueReason = ('MetaTagAllowListInvalidOrigin' | 'MetaTagModifiedHTML');
+ 
+         export interface FederatedAuthRequestIssueDetails {
+@@ -3527,7 +3519,7 @@ export namespace Protocol {
+          * third_party/blink/public/mojom/devtools/inspector_issue.mojom to include
+          * all cases except for success.
+          */
+-        export type FederatedAuthRequestIssueReason = ('ShouldEmbargo' | 'TooManyRequests' | 'WellKnownHttpNotFound' | 'WellKnownNoResponse' | 'WellKnownInvalidResponse' | 'WellKnownListEmpty' | 'WellKnownInvalidContentType' | 'ConfigNotInWellKnown' | 'WellKnownTooBig' | 'ConfigHttpNotFound' | 'ConfigNoResponse' | 'ConfigInvalidResponse' | 'ConfigInvalidContentType' | 'ClientMetadataHttpNotFound' | 'ClientMetadataNoResponse' | 'ClientMetadataInvalidResponse' | 'ClientMetadataInvalidContentType' | 'DisabledInSettings' | 'ErrorFetchingSignin' | 'InvalidSigninResponse' | 'AccountsHttpNotFound' | 'AccountsNoResponse' | 'AccountsInvalidResponse' | 'AccountsListEmpty' | 'AccountsInvalidContentType' | 'IdTokenHttpNotFound' | 'IdTokenNoResponse' | 'IdTokenInvalidResponse' | 'IdTokenInvalidRequest' | 'IdTokenInvalidContentType' | 'ErrorIdToken' | 'Canceled' | 'RpPageNotVisible' | 'SilentMediationFailure' | 'ThirdPartyCookiesBlocked');
++        export type FederatedAuthRequestIssueReason = ('ShouldEmbargo' | 'TooManyRequests' | 'WellKnownHttpNotFound' | 'WellKnownNoResponse' | 'WellKnownInvalidResponse' | 'WellKnownListEmpty' | 'WellKnownInvalidContentType' | 'ConfigNotInWellKnown' | 'WellKnownTooBig' | 'ConfigHttpNotFound' | 'ConfigNoResponse' | 'ConfigInvalidResponse' | 'ConfigInvalidContentType' | 'ClientMetadataHttpNotFound' | 'ClientMetadataNoResponse' | 'ClientMetadataInvalidResponse' | 'ClientMetadataInvalidContentType' | 'DisabledInSettings' | 'ErrorFetchingSignin' | 'InvalidSigninResponse' | 'AccountsHttpNotFound' | 'AccountsNoResponse' | 'AccountsInvalidResponse' | 'AccountsListEmpty' | 'AccountsInvalidContentType' | 'IdTokenHttpNotFound' | 'IdTokenNoResponse' | 'IdTokenInvalidResponse' | 'IdTokenInvalidRequest' | 'IdTokenInvalidContentType' | 'ErrorIdToken' | 'Canceled' | 'RpPageNotVisible' | 'SilentMediationFailure' | 'ThirdPartyCookiesBlocked' | 'NotSignedInWithIdp');
+ 
+         export interface FederatedAuthUserInfoRequestIssueDetails {
+             federatedAuthUserInfoRequestIssueReason: FederatedAuthUserInfoRequestIssueReason;
+@@ -3581,12 +3573,33 @@ export namespace Protocol {
+             failedRequestInfo?: FailedRequestInfo;
+         }
+ 
++        export type PropertyRuleIssueReason = ('InvalidSyntax' | 'InvalidInitialValue' | 'InvalidInherits' | 'InvalidName');
++
++        /**
++         * This issue warns about errors in property rules that lead to property
++         * registrations being ignored.
++         */
++        export interface PropertyRuleIssueDetails {
++            /**
++             * Source code position of the property rule.
++             */
++            sourceCodeLocation: SourceCodeLocation;
++            /**
++             * Reason why the property rule was discarded.
++             */
++            propertyRuleIssueReason: PropertyRuleIssueReason;
++            /**
++             * The value of the property rule property that failed to parse
++             */
++            propertyValue?: string;
++        }
++
+         /**
+          * A unique identifier for the type of issue. Each type may use one of the
+          * optional fields in InspectorIssueDetails to convey more specific
+          * information about the kind of issue.
+          */
+-        export type InspectorIssueCode = ('CookieIssue' | 'MixedContentIssue' | 'BlockedByResponseIssue' | 'HeavyAdIssue' | 'ContentSecurityPolicyIssue' | 'SharedArrayBufferIssue' | 'LowTextContrastIssue' | 'CorsIssue' | 'AttributionReportingIssue' | 'QuirksModeIssue' | 'NavigatorUserAgentIssue' | 'GenericIssue' | 'DeprecationIssue' | 'ClientHintIssue' | 'FederatedAuthRequestIssue' | 'BounceTrackingIssue' | 'StylesheetLoadingIssue' | 'FederatedAuthUserInfoRequestIssue');
++        export type InspectorIssueCode = ('CookieIssue' | 'MixedContentIssue' | 'BlockedByResponseIssue' | 'HeavyAdIssue' | 'ContentSecurityPolicyIssue' | 'SharedArrayBufferIssue' | 'LowTextContrastIssue' | 'CorsIssue' | 'AttributionReportingIssue' | 'QuirksModeIssue' | 'NavigatorUserAgentIssue' | 'GenericIssue' | 'DeprecationIssue' | 'ClientHintIssue' | 'FederatedAuthRequestIssue' | 'BounceTrackingIssue' | 'CookieDeprecationMetadataIssue' | 'StylesheetLoadingIssue' | 'FederatedAuthUserInfoRequestIssue' | 'PropertyRuleIssue');
+ 
+         /**
+          * This struct holds a list of optional fields with additional information
+@@ -3610,7 +3623,9 @@ export namespace Protocol {
+             clientHintIssueDetails?: ClientHintIssueDetails;
+             federatedAuthRequestIssueDetails?: FederatedAuthRequestIssueDetails;
+             bounceTrackingIssueDetails?: BounceTrackingIssueDetails;
++            cookieDeprecationMetadataIssueDetails?: CookieDeprecationMetadataIssueDetails;
+             stylesheetLoadingIssueDetails?: StylesheetLoadingIssueDetails;
++            propertyRuleIssueDetails?: PropertyRuleIssueDetails;
+             federatedAuthUserInfoRequestIssueDetails?: FederatedAuthUserInfoRequestIssueDetails;
+         }
+ 
+@@ -3723,18 +3738,73 @@ export namespace Protocol {
+              */
+             name: string;
+             /**
+-             * address field name, for example Jon Doe.
++             * address field value, for example Jon Doe.
+              */
+             value: string;
+         }
+ 
++        /**
++         * A list of address fields.
++         */
++        export interface AddressFields {
++            fields: AddressField[];
++        }
++
+         export interface Address {
+             /**
+-             * fields and values defining a test address.
++             * fields and values defining an address.
+              */
+             fields: AddressField[];
+         }
+ 
++        /**
++         * Defines how an address can be displayed like in chrome://settings/addresses.
++         * Address UI is a two dimensional array, each inner array is an "address information line", and when rendered in a UI surface should be displayed as such.
++         * The following address UI for instance:
++         * [[{name: "GIVE_NAME", value: "Jon"}, {name: "FAMILY_NAME", value: "Doe"}], [{name: "CITY", value: "Munich"}, {name: "ZIP", value: "81456"}]]
++         * should allow the receiver to render:
++         * Jon Doe
++         * Munich 81456
++         */
++        export interface AddressUI {
++            /**
++             * A two dimension array containing the repesentation of values from an address profile.
++             */
++            addressFields: AddressFields[];
++        }
++
++        /**
++         * Specified whether a filled field was done so by using the html autocomplete attribute or autofill heuristics.
++         */
++        export type FillingStrategy = ('autocompleteAttribute' | 'autofillInferred');
++
++        export interface FilledField {
++            /**
++             * The type of the field, e.g text, password etc.
++             */
++            htmlType: string;
++            /**
++             * the html id
++             */
++            id: string;
++            /**
++             * the html name
++             */
++            name: string;
++            /**
++             * the field value
++             */
++            value: string;
++            /**
++             * The actual field type, e.g FAMILY_NAME
++             */
++            autofillType: string;
++            /**
++             * The filling strategy
++             */
++            fillingStrategy: FillingStrategy;
++        }
++
+         export interface TriggerRequest {
+             /**
+              * Identifies a field that serves as an anchor for autofill.
+@@ -3753,6 +3823,21 @@ export namespace Protocol {
+         export interface SetAddressesRequest {
+             addresses: Address[];
+         }
++
++        /**
++         * Emitted when an address form is filled.
++         */
++        export interface AddressFormFilledEvent {
++            /**
++             * Information about the fields that were filled
++             */
++            filledFields: FilledField[];
++            /**
++             * An UI representation of the address used to fill the form.
++             * Consists of a 2D array where each child represents an address/profile line.
++             */
++            addressUi: AddressUI;
++        }
+     }
+ 
+     /**
+@@ -4963,6 +5048,39 @@ export namespace Protocol {
+             keyframes: CSSKeyframeRule[];
+         }
+ 
++        /**
++         * Representation of a custom property registration through CSS.registerProperty
++         */
++        export interface CSSPropertyRegistration {
++            propertyName: string;
++            initialValue?: Value;
++            inherits: boolean;
++            syntax: string;
++        }
++
++        /**
++         * CSS property at-rule representation.
++         */
++        export interface CSSPropertyRule {
++            /**
++             * The css style sheet identifier (absent for user agent stylesheet and user-specified
++             * stylesheet rules) this rule came from.
++             */
++            styleSheetId?: StyleSheetId;
++            /**
++             * Parent stylesheet's origin.
++             */
++            origin: StyleSheetOrigin;
++            /**
++             * Associated property name.
++             */
++            propertyName: Value;
++            /**
++             * Associated style declaration.
++             */
++            style: CSSStyle;
++        }
++
+         /**
+          * CSS keyframe rule representation.
+          */
+@@ -5152,6 +5270,14 @@ export namespace Protocol {
+              * A list of CSS position fallbacks matching this node.
+              */
+             cssPositionFallbackRules?: CSSPositionFallbackRule[];
++            /**
++             * A list of CSS at-property rules matching this node.
++             */
++            cssPropertyRules?: CSSPropertyRule[];
++            /**
++             * A list of CSS property registrations matching this node.
++             */
++            cssPropertyRegistrations?: CSSPropertyRegistration[];
+             /**
+              * Id of the first parent element that does not have display: contents.
+              */
+@@ -5212,6 +5338,19 @@ export namespace Protocol {
+             value: string;
+         }
+ 
++        export interface SetPropertyRulePropertyNameRequest {
++            styleSheetId: StyleSheetId;
++            range: SourceRange;
++            propertyName: string;
++        }
++
++        export interface SetPropertyRulePropertyNameResponse {
++            /**
++             * The resulting key text after modification.
++             */
++            propertyName: Value;
++        }
++
+         export interface SetKeyframeKeyRequest {
+             styleSheetId: StyleSheetId;
+             range: SourceRange;
+@@ -6970,10 +7109,9 @@ export namespace Protocol {
+     }
+ 
+     /**
+-     * EventBreakpoints permits setting breakpoints on particular operations and
+-     * events in targets that run JavaScript but do not have a DOM.
+-     * JavaScript execution will stop on these operations as if there was a regular
+-     * breakpoint set.
++     * EventBreakpoints permits setting JavaScript breakpoints on operations and events
++     * occurring in native code invoked from JavaScript. Once breakpoint is hit, it is
++     * reported through Debugger domain, similarly to regular breakpoints being hit.
+      */
+     export namespace EventBreakpoints {
+ 
+@@ -7775,6 +7913,41 @@ export namespace Protocol {
+             wow64?: boolean;
+         }
+ 
++        /**
++         * Used to specify sensor types to emulate.
++         * See https://w3c.github.io/sensors/#automation for more information.
++         */
++        export type SensorType = ('absolute-orientation' | 'accelerometer' | 'ambient-light' | 'gravity' | 'gyroscope' | 'linear-acceleration' | 'magnetometer' | 'proximity' | 'relative-orientation');
++
++        export interface SensorMetadata {
++            available?: boolean;
++            minimumFrequency?: number;
++            maximumFrequency?: number;
++        }
++
++        export interface SensorReadingSingle {
++            value: number;
++        }
++
++        export interface SensorReadingXYZ {
++            x: number;
++            y: number;
++            z: number;
++        }
++
++        export interface SensorReadingQuaternion {
++            x: number;
++            y: number;
++            z: number;
++            w: number;
++        }
++
++        export interface SensorReading {
++            single?: SensorReadingSingle;
++            xyz?: SensorReadingXYZ;
++            quaternion?: SensorReadingQuaternion;
++        }
++
+         /**
+          * Enum of image types that can be disabled.
+          */
+@@ -7949,6 +8122,25 @@ export namespace Protocol {
+             accuracy?: number;
+         }
+ 
++        export interface GetOverriddenSensorInformationRequest {
++            type: SensorType;
++        }
++
++        export interface GetOverriddenSensorInformationResponse {
++            requestedSamplingFrequency: number;
++        }
++
++        export interface SetSensorOverrideEnabledRequest {
++            enabled: boolean;
++            type: SensorType;
++            metadata?: SensorMetadata;
++        }
++
++        export interface SetSensorOverrideReadingsRequest {
++            type: SensorType;
++            reading: SensorReading;
++        }
++
+         export interface SetIdleOverrideRequest {
+             /**
+              * Mock isUserActive
+@@ -8618,11 +8810,11 @@ export namespace Protocol {
+             /**
+              * The plane angle between the Y-Z plane and the plane containing both the stylus axis and the Y axis, in degrees of the range [-90,90], a positive tiltX is to the right (default: 0)
+              */
+-            tiltX?: integer;
++            tiltX?: number;
+             /**
+              * The plane angle between the X-Z plane and the plane containing both the stylus axis and the X axis, in degrees of the range [-90,90], a positive tiltY is towards the user (default: 0).
+              */
+-            tiltY?: integer;
++            tiltY?: number;
+             /**
+              * The clockwise rotation of a pen stylus around its own major axis, in degrees in the range [0,359] (default: 0).
+              */
+@@ -8870,11 +9062,11 @@ export namespace Protocol {
+             /**
+              * The plane angle between the Y-Z plane and the plane containing both the stylus axis and the Y axis, in degrees of the range [-90,90], a positive tiltX is to the right (default: 0).
+              */
+-            tiltX?: integer;
++            tiltX?: number;
+             /**
+              * The plane angle between the X-Z plane and the plane containing both the stylus axis and the X axis, in degrees of the range [-90,90], a positive tiltY is towards the user (default: 0).
+              */
+-            tiltY?: integer;
++            tiltY?: number;
+             /**
+              * The clockwise rotation of a pen stylus around its own major axis, in degrees in the range [0,359] (default: 0).
+              */
+@@ -10317,12 +10509,12 @@ export namespace Protocol {
+         /**
+          * Types of reasons why a cookie may not be stored from a response.
+          */
+-        export type SetCookieBlockedReason = ('SecureOnly' | 'SameSiteStrict' | 'SameSiteLax' | 'SameSiteUnspecifiedTreatedAsLax' | 'SameSiteNoneInsecure' | 'UserPreferences' | 'ThirdPartyBlockedInFirstPartySet' | 'SyntaxError' | 'SchemeNotSupported' | 'OverwriteSecure' | 'InvalidDomain' | 'InvalidPrefix' | 'UnknownError' | 'SchemefulSameSiteStrict' | 'SchemefulSameSiteLax' | 'SchemefulSameSiteUnspecifiedTreatedAsLax' | 'SamePartyFromCrossPartyContext' | 'SamePartyConflictsWithOtherAttributes' | 'NameValuePairExceedsMaxSize' | 'DisallowedCharacter');
++        export type SetCookieBlockedReason = ('SecureOnly' | 'SameSiteStrict' | 'SameSiteLax' | 'SameSiteUnspecifiedTreatedAsLax' | 'SameSiteNoneInsecure' | 'UserPreferences' | 'ThirdPartyPhaseout' | 'ThirdPartyBlockedInFirstPartySet' | 'SyntaxError' | 'SchemeNotSupported' | 'OverwriteSecure' | 'InvalidDomain' | 'InvalidPrefix' | 'UnknownError' | 'SchemefulSameSiteStrict' | 'SchemefulSameSiteLax' | 'SchemefulSameSiteUnspecifiedTreatedAsLax' | 'SamePartyFromCrossPartyContext' | 'SamePartyConflictsWithOtherAttributes' | 'NameValuePairExceedsMaxSize' | 'DisallowedCharacter' | 'NoCookieContent');
+ 
+         /**
+          * Types of reasons why a cookie may not be sent with a request.
+          */
+-        export type CookieBlockedReason = ('SecureOnly' | 'NotOnPath' | 'DomainMismatch' | 'SameSiteStrict' | 'SameSiteLax' | 'SameSiteUnspecifiedTreatedAsLax' | 'SameSiteNoneInsecure' | 'UserPreferences' | 'ThirdPartyBlockedInFirstPartySet' | 'UnknownError' | 'SchemefulSameSiteStrict' | 'SchemefulSameSiteLax' | 'SchemefulSameSiteUnspecifiedTreatedAsLax' | 'SamePartyFromCrossPartyContext' | 'NameValuePairExceedsMaxSize');
++        export type CookieBlockedReason = ('SecureOnly' | 'NotOnPath' | 'DomainMismatch' | 'SameSiteStrict' | 'SameSiteLax' | 'SameSiteUnspecifiedTreatedAsLax' | 'SameSiteNoneInsecure' | 'UserPreferences' | 'ThirdPartyPhaseout' | 'ThirdPartyBlockedInFirstPartySet' | 'UnknownError' | 'SchemefulSameSiteStrict' | 'SchemefulSameSiteLax' | 'SchemefulSameSiteUnspecifiedTreatedAsLax' | 'SamePartyFromCrossPartyContext' | 'NameValuePairExceedsMaxSize');
+ 
+         /**
+          * A cookie which was not stored from a response with the corresponding reason.
+@@ -12229,6 +12421,24 @@ export namespace Protocol {
+             outlineColor?: DOM.RGBA;
+         }
+ 
++        /**
++         * Configuration for Window Controls Overlay
++         */
++        export interface WindowControlsOverlayConfig {
++            /**
++             * Whether the title bar CSS should be shown when emulating the Window Controls Overlay.
++             */
++            showCSS: boolean;
++            /**
++             * Seleted platforms to show the overlay.
++             */
++            selectedPlatform: string;
++            /**
++             * The theme color defined in app manifest.
++             */
++            themeColor: string;
++        }
++
+         export interface ContainerQueryHighlightConfig {
+             /**
+              * A descriptor for the highlight appearance of container query containers.
+@@ -12557,6 +12767,13 @@ export namespace Protocol {
+             isolatedElementHighlightConfigs: IsolatedElementHighlightConfig[];
+         }
+ 
++        export interface SetShowWindowControlsOverlayRequest {
++            /**
++             * Window Controls Overlay data, null means hide Window Controls Overlay
++             */
++            windowControlsOverlayConfig?: WindowControlsOverlayConfig;
++        }
++
+         /**
+          * Fired when the node should be inspected. This happens after call to `setInspectMode` or when
+          * user manually inspects an element.
+@@ -12643,7 +12860,7 @@ export namespace Protocol {
+          * All Permissions Policy features. This enum should match the one defined
+          * in third_party/blink/renderer/core/permissions_policy/permissions_policy_features.json5.
+          */
+-        export type PermissionsPolicyFeature = ('accelerometer' | 'ambient-light-sensor' | 'attribution-reporting' | 'autoplay' | 'bluetooth' | 'browsing-topics' | 'camera' | 'ch-dpr' | 'ch-device-memory' | 'ch-downlink' | 'ch-ect' | 'ch-prefers-color-scheme' | 'ch-prefers-reduced-motion' | 'ch-rtt' | 'ch-save-data' | 'ch-ua' | 'ch-ua-arch' | 'ch-ua-bitness' | 'ch-ua-platform' | 'ch-ua-model' | 'ch-ua-mobile' | 'ch-ua-form-factor' | 'ch-ua-full-version' | 'ch-ua-full-version-list' | 'ch-ua-platform-version' | 'ch-ua-wow64' | 'ch-viewport-height' | 'ch-viewport-width' | 'ch-width' | 'clipboard-read' | 'clipboard-write' | 'compute-pressure' | 'cross-origin-isolated' | 'direct-sockets' | 'display-capture' | 'document-domain' | 'encrypted-media' | 'execution-while-out-of-viewport' | 'execution-while-not-rendered' | 'focus-without-user-activation' | 'fullscreen' | 'frobulate' | 'gamepad' | 'geolocation' | 'gyroscope' | 'hid' | 'identity-credentials-get' | 'idle-detection' | 'interest-cohort' | 'join-ad-interest-group' | 'keyboard-map' | 'local-fonts' | 'magnetometer' | 'microphone' | 'midi' | 'otp-credentials' | 'payment' | 'picture-in-picture' | 'private-aggregation' | 'private-state-token-issuance' | 'private-state-token-redemption' | 'publickey-credentials-get' | 'run-ad-auction' | 'screen-wake-lock' | 'serial' | 'shared-autofill' | 'shared-storage' | 'shared-storage-select-url' | 'smart-card' | 'storage-access' | 'sync-xhr' | 'unload' | 'usb' | 'vertical-scroll' | 'web-share' | 'window-management' | 'window-placement' | 'xr-spatial-tracking');
++        export type PermissionsPolicyFeature = ('accelerometer' | 'ambient-light-sensor' | 'attribution-reporting' | 'autoplay' | 'bluetooth' | 'browsing-topics' | 'camera' | 'ch-dpr' | 'ch-device-memory' | 'ch-downlink' | 'ch-ect' | 'ch-prefers-color-scheme' | 'ch-prefers-reduced-motion' | 'ch-prefers-reduced-transparency' | 'ch-rtt' | 'ch-save-data' | 'ch-ua' | 'ch-ua-arch' | 'ch-ua-bitness' | 'ch-ua-platform' | 'ch-ua-model' | 'ch-ua-mobile' | 'ch-ua-form-factor' | 'ch-ua-full-version' | 'ch-ua-full-version-list' | 'ch-ua-platform-version' | 'ch-ua-wow64' | 'ch-viewport-height' | 'ch-viewport-width' | 'ch-width' | 'clipboard-read' | 'clipboard-write' | 'compute-pressure' | 'cross-origin-isolated' | 'direct-sockets' | 'display-capture' | 'document-domain' | 'encrypted-media' | 'execution-while-out-of-viewport' | 'execution-while-not-rendered' | 'focus-without-user-activation' | 'fullscreen' | 'frobulate' | 'gamepad' | 'geolocation' | 'gyroscope' | 'hid' | 'identity-credentials-get' | 'idle-detection' | 'interest-cohort' | 'join-ad-interest-group' | 'keyboard-map' | 'local-fonts' | 'magnetometer' | 'microphone' | 'midi' | 'otp-credentials' | 'payment' | 'picture-in-picture' | 'private-aggregation' | 'private-state-token-issuance' | 'private-state-token-redemption' | 'publickey-credentials-get' | 'run-ad-auction' | 'screen-wake-lock' | 'serial' | 'shared-autofill' | 'shared-storage' | 'shared-storage-select-url' | 'smart-card' | 'storage-access' | 'sync-xhr' | 'unload' | 'usb' | 'vertical-scroll' | 'web-share' | 'window-management' | 'window-placement' | 'xr-spatial-tracking');
+ 
+         /**
+          * Reason for a permissions policy feature to be disabled.
+@@ -14890,13 +15107,13 @@ export namespace Protocol {
+         /**
+          * Enum of interest group access types.
+          */
+-        export type InterestGroupAccessType = ('join' | 'leave' | 'update' | 'loaded' | 'bid' | 'win');
++        export type InterestGroupAccessType = ('join' | 'leave' | 'update' | 'loaded' | 'bid' | 'win' | 'additionalBid' | 'additionalBidWin' | 'clear');
+ 
+         /**
+          * Ad advertising element inside an interest group.
+          */
+         export interface InterestGroupAd {
+-            renderUrl: string;
++            renderURL: string;
+             metadata?: string;
+         }
+ 
+@@ -14908,10 +15125,10 @@ export namespace Protocol {
+             name: string;
+             expirationTime: Network.TimeSinceEpoch;
+             joiningOrigin: string;
+-            biddingUrl?: string;
+-            biddingWasmHelperUrl?: string;
+-            updateUrl?: string;
+-            trustedBiddingSignalsUrl?: string;
++            biddingLogicURL?: string;
++            biddingWasmHelperURL?: string;
++            updateURL?: string;
++            trustedBiddingSignalsURL?: string;
+             trustedBiddingSignalsKeys: string[];
+             userBiddingSignals?: string;
+             ads: InterestGroupAd[];
+@@ -15056,20 +15273,28 @@ export namespace Protocol {
+             value: UnsignedInt128AsBase16;
+         }
+ 
+-        export interface AttributionReportingSourceRegistration {
+-            time: Network.TimeSinceEpoch;
++        export interface AttributionReportingEventReportWindows {
+             /**
+              * duration in seconds
+              */
+-            expiry?: integer;
++            start: integer;
+             /**
+              * duration in seconds
+              */
+-            eventReportWindow?: integer;
++            ends: integer[];
++        }
++
++        export interface AttributionReportingSourceRegistration {
++            time: Network.TimeSinceEpoch;
++            /**
++             * duration in seconds
++             */
++            expiry: integer;
++            eventReportWindows: AttributionReportingEventReportWindows;
+             /**
+              * duration in seconds
+              */
+-            aggregatableReportWindow?: integer;
++            aggregatableReportWindow: integer;
+             type: AttributionReportingSourceType;
+             sourceOrigin: string;
+             reportingOrigin: string;
+@@ -17381,7 +17606,7 @@ export namespace Protocol {
+         /**
+          * List of FinalStatus reasons for Prerender2.
+          */
+-        export type PrerenderFinalStatus = ('Activated' | 'Destroyed' | 'LowEndDevice' | 'InvalidSchemeRedirect' | 'InvalidSchemeNavigation' | 'InProgressNavigation' | 'NavigationRequestBlockedByCsp' | 'MainFrameNavigation' | 'MojoBinderPolicy' | 'RendererProcessCrashed' | 'RendererProcessKilled' | 'Download' | 'TriggerDestroyed' | 'NavigationNotCommitted' | 'NavigationBadHttpStatus' | 'ClientCertRequested' | 'NavigationRequestNetworkError' | 'MaxNumOfRunningPrerendersExceeded' | 'CancelAllHostsForTesting' | 'DidFailLoad' | 'Stop' | 'SslCertificateError' | 'LoginAuthRequested' | 'UaChangeRequiresReload' | 'BlockedByClient' | 'AudioOutputDeviceRequested' | 'MixedContent' | 'TriggerBackgrounded' | 'MemoryLimitExceeded' | 'FailToGetMemoryUsage' | 'DataSaverEnabled' | 'HasEffectiveUrl' | 'ActivatedBeforeStarted' | 'InactivePageRestriction' | 'StartFailed' | 'TimeoutBackgrounded' | 'CrossSiteRedirectInInitialNavigation' | 'CrossSiteNavigationInInitialNavigation' | 'SameSiteCrossOriginRedirectNotOptInInInitialNavigation' | 'SameSiteCrossOriginNavigationNotOptInInInitialNavigation' | 'ActivationNavigationParameterMismatch' | 'ActivatedInBackground' | 'EmbedderHostDisallowed' | 'ActivationNavigationDestroyedBeforeSuccess' | 'TabClosedByUserGesture' | 'TabClosedWithoutUserGesture' | 'PrimaryMainFrameRendererProcessCrashed' | 'PrimaryMainFrameRendererProcessKilled' | 'ActivationFramePolicyNotCompatible' | 'PreloadingDisabled' | 'BatterySaverEnabled' | 'ActivatedDuringMainFrameNavigation' | 'PreloadingUnsupportedByWebContents' | 'CrossSiteRedirectInMainFrameNavigation' | 'CrossSiteNavigationInMainFrameNavigation' | 'SameSiteCrossOriginRedirectNotOptInInMainFrameNavigation' | 'SameSiteCrossOriginNavigationNotOptInInMainFrameNavigation' | 'MemoryPressureOnTrigger' | 'MemoryPressureAfterTriggered' | 'PrerenderingDisabledByDevTools' | 'ResourceLoadBlockedByClient' | 'SpeculationRuleRemoved' | 'ActivatedWithAuxiliaryBrowsingContexts');
++        export type PrerenderFinalStatus = ('Activated' | 'Destroyed' | 'LowEndDevice' | 'InvalidSchemeRedirect' | 'InvalidSchemeNavigation' | 'NavigationRequestBlockedByCsp' | 'MainFrameNavigation' | 'MojoBinderPolicy' | 'RendererProcessCrashed' | 'RendererProcessKilled' | 'Download' | 'TriggerDestroyed' | 'NavigationNotCommitted' | 'NavigationBadHttpStatus' | 'ClientCertRequested' | 'NavigationRequestNetworkError' | 'CancelAllHostsForTesting' | 'DidFailLoad' | 'Stop' | 'SslCertificateError' | 'LoginAuthRequested' | 'UaChangeRequiresReload' | 'BlockedByClient' | 'AudioOutputDeviceRequested' | 'MixedContent' | 'TriggerBackgrounded' | 'MemoryLimitExceeded' | 'DataSaverEnabled' | 'TriggerUrlHasEffectiveUrl' | 'ActivatedBeforeStarted' | 'InactivePageRestriction' | 'StartFailed' | 'TimeoutBackgrounded' | 'CrossSiteRedirectInInitialNavigation' | 'CrossSiteNavigationInInitialNavigation' | 'SameSiteCrossOriginRedirectNotOptInInInitialNavigation' | 'SameSiteCrossOriginNavigationNotOptInInInitialNavigation' | 'ActivationNavigationParameterMismatch' | 'ActivatedInBackground' | 'EmbedderHostDisallowed' | 'ActivationNavigationDestroyedBeforeSuccess' | 'TabClosedByUserGesture' | 'TabClosedWithoutUserGesture' | 'PrimaryMainFrameRendererProcessCrashed' | 'PrimaryMainFrameRendererProcessKilled' | 'ActivationFramePolicyNotCompatible' | 'PreloadingDisabled' | 'BatterySaverEnabled' | 'ActivatedDuringMainFrameNavigation' | 'PreloadingUnsupportedByWebContents' | 'CrossSiteRedirectInMainFrameNavigation' | 'CrossSiteNavigationInMainFrameNavigation' | 'SameSiteCrossOriginRedirectNotOptInInMainFrameNavigation' | 'SameSiteCrossOriginNavigationNotOptInInMainFrameNavigation' | 'MemoryPressureOnTrigger' | 'MemoryPressureAfterTriggered' | 'PrerenderingDisabledByDevTools' | 'SpeculationRuleRemoved' | 'ActivatedWithAuxiliaryBrowsingContexts' | 'MaxNumOfRunningEagerPrerendersExceeded' | 'MaxNumOfRunningNonEagerPrerendersExceeded' | 'MaxNumOfRunningEmbedderPrerendersExceeded' | 'PrerenderingUrlHasEffectiveUrl' | 'RedirectedPrerenderingUrlHasEffectiveUrl' | 'ActivationUrlHasEffectiveUrl');
+ 
+         /**
+          * Preloading status values, see also PreloadingTriggeringOutcome. This
+@@ -17406,24 +17631,6 @@ export namespace Protocol {
+             id: RuleSetId;
+         }
+ 
+-        /**
+-         * Fired when a prerender attempt is completed.
+-         */
+-        export interface PrerenderAttemptCompletedEvent {
+-            key: PreloadingAttemptKey;
+-            /**
+-             * The frame id of the frame initiating prerendering.
+-             */
+-            initiatingFrameId: Page.FrameId;
+-            prerenderingUrl: string;
+-            finalStatus: PrerenderFinalStatus;
+-            /**
+-             * This is used to give users more information about the name of the API call
+-             * that is incompatible with prerender and has caused the cancellation of the attempt
+-             */
+-            disallowedApiMethod?: string;
+-        }
+-
+         /**
+          * Fired when a preload enabled state is updated.
+          */
+@@ -17487,7 +17694,7 @@ export namespace Protocol {
+         /**
+          * Whether the dialog shown is an account chooser or an auto re-authentication dialog.
+          */
+-        export type DialogType = ('AccountChooser' | 'AutoReauthn');
++        export type DialogType = ('AccountChooser' | 'AutoReauthn' | 'ConfirmIdpLogin');
+ 
+         /**
+          * Corresponds to IdentityRequestAccount
+@@ -17499,7 +17706,7 @@ export namespace Protocol {
+             givenName: string;
+             pictureUrl: string;
+             idpConfigUrl: string;
+-            idpSigninUrl: string;
++            idpLoginUrl: string;
+             loginState: LoginState;
+             /**
+              * These two are only set if the loginState is signUp
+@@ -17522,6 +17729,10 @@ export namespace Protocol {
+             accountIndex: integer;
+         }
+ 
++        export interface ConfirmIdpLoginRequest {
++            dialogId: string;
++        }
++
+         export interface DismissDialogRequest {
+             dialogId: string;
+             triggerCooldown?: boolean;

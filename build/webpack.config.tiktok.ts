@@ -3,22 +3,22 @@ import { Configuration, WebpackPluginInstance } from 'webpack'
 
 import WebpackBar from 'webpackbar'
 
-import webpackConfigBase from './webpack.config.base'
+import webpackConfigTBase from './webpack.config.tbase'
 import buildConfig from './config'
 
-const { dist, mainSource: appPath } = buildConfig
+const { dist, tiktokSource: appPath } = buildConfig
 const nodeExternals = require('webpack-node-externals')
 
 const webpackConfig: Configuration = {
-  ...webpackConfigBase,
-  target: 'electron-main',
+  ...webpackConfigTBase,
+  target: 'node16.20',
 
   entry: {
     main: path.join(appPath, 'index.ts'),
   },
 
   output: {
-    path: path.join(dist, 'main'),
+    path: path.join(dist, 'tiktok'),
     filename: '[name].js',
     chunkFilename: '[name].js',
   },
@@ -35,8 +35,8 @@ const webpackConfig: Configuration = {
   externals: [nodeExternals()],
 
   plugins: [
-    ...(webpackConfigBase?.plugins ?? []),
-    new WebpackBar({ name: 'Main    ', color: '#799AFE' }),
+    ...(webpackConfigTBase?.plugins ?? []),
+    new WebpackBar({ name: 'TikTok    ', color: '#eec690' }),
   ] as WebpackPluginInstance[],
 }
 

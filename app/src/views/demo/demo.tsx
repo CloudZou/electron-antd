@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Button, Input, Spin, Card } from 'antd'
+import { ipcRenderer } from 'electron'
 
 import { withStore } from '@/core/store'
 
@@ -13,6 +14,7 @@ declare interface DemoState {
   loading: boolean
   createWindowLoading: boolean
   asyncDispatchLoading: boolean
+  isOpen: boolean
 }
 
 @withStore(['count', { countAlias: 'count' }])
@@ -23,6 +25,7 @@ export default class Demo extends React.Component<DemoProps, DemoState> {
     loading: false,
     createWindowLoading: false,
     asyncDispatchLoading: false,
+    isOpen: false,
   }
 
   // 构造函数
@@ -82,6 +85,9 @@ export default class Demo extends React.Component<DemoProps, DemoState> {
           <Button onClick={this.openNewWindow} loading={createWindowLoading}>
             Open new window
           </Button>
+          <Button onClick={this.openAdsPowerBrowser} loading={createWindowLoading}>
+            打开AdsPower浏览器
+          </Button>
         </Card>
 
         <Card title="Request Test" className="mb-16">
@@ -122,6 +128,16 @@ export default class Demo extends React.Component<DemoProps, DemoState> {
   openNewWindow = (): void => {
     this.setState({ createWindowLoading: true })
     $tools.createWindow('Demo').finally(() => this.setState({ createWindowLoading: false }))
+  }
+  openAdsPowerBrowser = (): void => {
+    const appname = 'D:\\Program Files\\AdsPower Global\\AdsPower Global'
+    if (!this.state.isOpen) {
+      console.log('渲染层打开')
+      ipcRenderer.send('open-child-now', appname)
+      this.setState({ isOpen: true })
+    } else {
+      ipcRenderer.send('close-child-now', appname)
+    }
   }
 
   requestTest(): void {

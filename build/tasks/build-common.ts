@@ -7,7 +7,7 @@ const { env: envConfig } = buildConfig
 interface BuildConfig {
   env: keyof typeof buildConfig.env
   webpackConfig: Configuration
-  type: 'main' | 'renderer'
+  type: 'main' | 'renderer' | 'tiktok'
 }
 
 function build({ env, webpackConfig }: BuildConfig): Promise<typeof buildConfig.env['prod']> {
